@@ -4,6 +4,10 @@ import styled from "styled-components";
 export const Wrapper = styled.div`
   background: black;
   padding-bottom: 200px;
+  h3 {
+    font-size: 20px;
+    margin: 5px;
+  }
 `;
 
 export const Loader = styled.div`
@@ -13,6 +17,18 @@ export const Loader = styled.div`
   align-items: center;
 `;
 
+export const Button = styled.button`
+  background-color: #2b392e;
+  border: #e7eae7;
+  font-size: 20px;
+  padding: 10px auto 10px auto;
+  margin: 10px;
+  border-radius: 10px;
+  color: white;
+  &:hover {
+    color: #4af76c;
+  }
+`;
 export const Banner = styled.div<{ bgPhoto: string }>`
   height: 100vh;
   display: flex;
@@ -121,13 +137,13 @@ export const BigOverview = styled.p`
 
 export const rowVariants = {
   hidden: {
-    x: window.outerWidth + 5,
+    x: window.outerWidth + 10,
   },
   visible: {
     x: 0,
   },
   exit: {
-    x: -window.outerWidth - 5,
+    x: -window.outerWidth - 10,
   },
 };
 

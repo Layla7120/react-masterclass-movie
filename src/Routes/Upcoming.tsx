@@ -2,10 +2,9 @@ import { AnimatePresence, useViewportScroll } from "framer-motion";
 import { useState } from "react";
 import { useQuery } from "react-query";
 import { useMatch, useNavigate } from "react-router-dom";
-import { getNowMovies, INowMoviesResult } from "../api";
+import { getUpcomingMovies, INowMoviesResult } from "../api";
 import { makeImagePath } from "../utilities";
 import {
-  Banner,
   BigCover,
   BigMovie,
   BigOverview,
@@ -18,14 +17,12 @@ import {
   Loader,
   offset,
   Overlay,
-  Overview,
   Row,
   rowVariants,
   Slider,
-  Title,
 } from "./styled";
 
-const NowPlaying = () => {
+const Upcoming = () => {
   const navigate = useNavigate();
   const [index, setIndex] = useState(0);
   const [leaving, setLeaving] = useState(false);
@@ -33,52 +30,46 @@ const NowPlaying = () => {
   const { scrollY } = useViewportScroll();
   const onOverlayClick = () => navigate("/");
   const { data, isLoading } = useQuery<INowMoviesResult>(
-    ["movies", "nowPlaying"],
-    getNowMovies
+    ["movies", "upcoming"],
+    getUpcomingMovies
   );
   const increaseIndex = () => {
     if (data) {
       if (leaving) return;
       toggleLeaving();
       const totalMovies = data.results.length - 1;
-      const maxIndex = Math.floor(totalMovies / offset) - 1;
+      const maxIndex = Math.ceil(totalMovies / offset) - 1;
       setIndex(prev => (prev === maxIndex ? 0 : prev + 1));
     }
   };
-  const toggleLeaving = () => setLeaving(prev => !prev);
   const onBoxClicked = (movieId: number) => {
-    navigate(`/movies/${movieId}`);
+    navigate(`movies/${movieId}`);
   };
+  const toggleLeaving = () => setLeaving(prev => !prev);
   const clickedMovie =
     bigMovieMatch?.params.movieId &&
     data?.results.find(movie => movie.id + "" === bigMovieMatch.params.movieId);
   return (
     <>
       {isLoading ? (
-        <Loader>Loading...</Loader>
+        <Loader></Loader>
       ) : (
         <>
-          <Banner bgPhoto={makeImagePath(data?.results[0].backdrop_path || "")}>
-            <Title>{data?.results[0].title}</Title>
-            <Overview>{data?.results[0].overview}</Overview>
-          </Banner>
-
+          <h3>
+            Upcoming
+            <Button onClick={increaseIndex}>Next</Button>
+          </h3>
           <Slider>
-            <h3>
-              Now Playing
-              <Button onClick={increaseIndex}>Next</Button>
-            </h3>
             <AnimatePresence initial={false} onExitComplete={toggleLeaving}>
               <Row
                 variants={rowVariants}
                 initial="hidden"
                 animate="visible"
                 exit="exit"
-                transition={{ type: "tween", duration: 1 }}
                 key={index}
+                transition={{ type: "tween", duration: 1 }}
               >
                 {data?.results
-                  .slice(1)
                   .slice(offset * index, offset * (index + 1))
                   .map(movie => (
                     <Box
@@ -134,4 +125,5 @@ const NowPlaying = () => {
     </>
   );
 };
-export default NowPlaying;
+
+export default Upcoming;

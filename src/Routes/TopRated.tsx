@@ -1,33 +1,41 @@
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, useViewportScroll } from "framer-motion";
 import { useState } from "react";
 import { useQuery } from "react-query";
-import { useNavigate } from "react-router-dom";
+import { useMatch, useNavigate } from "react-router-dom";
 import { getTopRatedMovies, ITopRatedMoviesResult } from "../api";
 import { makeImagePath } from "../utilities";
 import {
+  BigCover,
+  BigMovie,
+  BigOverview,
+  BigTitle,
   Box,
   boxVariants,
+  Button,
   Info,
   infoVariants,
   Loader,
   offset,
+  Overlay,
   Row,
   rowVariants,
   Slider,
 } from "./styled";
 
 const TopRated = () => {
-  const [leavingTR, setLeaving] = useState(false);
-  const [nowIndex, setIndex] = useState(0);
   const navigate = useNavigate();
+  const [index, setIndex] = useState(0);
+  const [leaving, setLeaving] = useState(false);
+  const bigMovieMatch = useMatch("/movies/:movieId");
+  const { scrollY } = useViewportScroll();
+  const onOverlayClick = () => navigate("/");
   const { data, isLoading } = useQuery<ITopRatedMoviesResult>(
     ["movies", "topRated"],
     getTopRatedMovies
   );
-
   const increaseIndex = () => {
     if (data) {
-      if (leavingTR) return;
+      if (leaving) return;
       toggleLeaving();
       const totalMovies = data.results.length - 1;
       const maxIndex = Math.ceil(totalMovies / offset) - 1;
@@ -38,25 +46,31 @@ const TopRated = () => {
     navigate(`movies/${movieId}`);
   };
   const toggleLeaving = () => setLeaving(prev => !prev);
+  const clickedMovie =
+    bigMovieMatch?.params.movieId &&
+    data?.results.find(movie => movie.id + "" === bigMovieMatch.params.movieId);
   return (
     <>
       {isLoading ? (
         <Loader></Loader>
       ) : (
         <>
+          <h3>
+            Top Rated
+            <Button onClick={increaseIndex}>Next</Button>
+          </h3>
           <Slider>
-            <button onClick={increaseIndex}>👻</button>
             <AnimatePresence initial={false} onExitComplete={toggleLeaving}>
               <Row
                 variants={rowVariants}
                 initial="hidden"
                 animate="visible"
                 exit="exit"
-                key={nowIndex}
+                key={index}
                 transition={{ type: "tween", duration: 1 }}
               >
                 {data?.results
-                  .slice(offset * nowIndex, offset * (nowIndex + 1))
+                  .slice(offset * index, offset * (index + 1))
                   .map(movie => (
                     <Box
                       layoutId={movie.id + ""}
@@ -76,9 +90,38 @@ const TopRated = () => {
               </Row>
             </AnimatePresence>
           </Slider>
+          <AnimatePresence>
+            {bigMovieMatch ? (
+              <>
+                <Overlay
+                  onClick={onOverlayClick}
+                  exit={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                />
+                <BigMovie
+                  style={{ top: scrollY.get() + 100 }}
+                  layoutId={bigMovieMatch.params.movieId}
+                >
+                  {clickedMovie && (
+                    <>
+                      <BigCover
+                        style={{
+                          backgroundImage: `linear-gradient(to top, black, transparent), url(${makeImagePath(
+                            clickedMovie.backdrop_path,
+                            "w500"
+                          )})`,
+                        }}
+                      />
+                      <BigTitle>{clickedMovie.title}</BigTitle>
+                      <BigOverview>{clickedMovie.overview}</BigOverview>
+                    </>
+                  )}
+                </BigMovie>
+              </>
+            ) : null}
+          </AnimatePresence>
         </>
       )}
-      ;
     </>
   );
 };
